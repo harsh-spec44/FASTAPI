@@ -1,54 +1,29 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
-from uuid import UUID, uuid4
 
-app = FastAPI() # Instance of fastapi
+app = FastAPI()
 
-class Task(BaseModel):
-    id: Optional[UUID] = None
-    title: str
-    description: Optional[str] = None
-    completed: bool = False
+class Item(BaseModel):
+    text:str = None
+    is_done: bool = False
 
-tasks = []
+items = []
 
-@app.post("/task/", response_model=Task)
-def create_task(task:Task):
-    task.id = uuid4()
-    tasks.append(task)
-    return task
+@app.get("/items/{item_id}", response_model=Item)
+def get_item(item_id: int) -> str:
 
-@app.get("/tasks/", response_model=List[Task]) # basic route for read function triggered 
-def read_tasks():
-    return tasks
+    if item_id < len(items):
+       return items[item_id]
+    
+    else:
+       raise HTTPException(status_code=404, detail="Item not found")
 
-@app.get("/tasks/{task_id}", response_model=Task)
-def read_task(task_id:UUID):
-    for task in tasks:
-     if task_id == task_id:
-        return task
+@app.get("/items/", response_model=list[Item])
+def list_items(limit: int=10):
+     return items[0:limit]
 
-    raise HTTPException(status_code=404, detail="Task not found")
+@app.post("/items")
+def create_item(item: str):
+    items.append(item)
+    return items
 
-@app.put("/tasks/{task_id}", response_model=Task)
-def update_task(task_id:UUID, task_update: Task):
-    for idx, task in enumerate(tasks):
-        if task.id == task_id:
-            updated_task = task.copy(update=task_update.dict(exclude_unset=True))
-            tasks[idx] = updated_task
-            return updated_task
-    raise HTTPException(status_code=404, detail="Task not found")
-
-@app.delete("/tasks/{task_id}", response_model=Task)
-def delete_task(task_id:UUID):
-    for idx, task in enumerate(tasks):
-        if task.id == task_id:
-            return tasks.pop(idx)
-        
-    raise HTTPException(status_code=404, detail="Task not found")
-
-if __name__ == "__main__": 
-    import uvicorn # uvicorn is the simple webserver that allow us to actually run api
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
