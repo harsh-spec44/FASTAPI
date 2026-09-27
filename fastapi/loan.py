@@ -21,4 +21,9 @@ def predict_loan(application: LoanApplication):
         "application_age": application.age,
         "decision": decision
     }
-    
+
+@app.get("/customer/{customer_id}")
+def get_customer(customer_id: int):
+    return {
+            "customer_id": customer_id
+    }
